@@ -1,0 +1,4 @@
+flask
+requests
+laya
+python-dotenv

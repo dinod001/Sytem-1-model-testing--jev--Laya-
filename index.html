@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Model Performance Benchmark</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f4f4f5;
+            --surface: #ffffff;
+            --surface-hover: #fafafa;
+            --border: #e4e4e7;
+            --primary: #8b5cf6;
+            --primary-glow: rgba(139, 92, 246, 0.3);
+            --text-main: #18181b;
+            --text-muted: #71717a;
+            --success: #10b981;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 3rem 1rem;
+            background-image: radial-gradient(circle at top, #ede9fe, var(--bg) 40%);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            z-index: 10;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            background: linear-gradient(to right, #6d28d9, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2rem;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            margin-bottom: 2rem;
+            transition: transform 0.3s ease, border-color 0.3s ease;
+        }
+        
+        .card:hover {
+            border-color: var(--primary);
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--text-main);
+            font-size: 0.95rem;
+        }
+
+        .input-group textarea, .input-group input {
+            width: 100%;
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            border-radius: 8px;
+            padding: 1rem;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            resize: vertical;
+        }
+
+        .input-group textarea:focus, .input-group input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-glow);
+            background: #ffffff;
+        }
+
+        button.btn {
+            background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+
+        button.btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px var(--primary-glow);
+        }
+
+        button.btn:active {
+            transform: translateY(0);
+        }
+
+        button.btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+            display: none;
+        }
+
+        .result-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+            animation: fadeInUp 0.5s ease backwards;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .result-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 4px;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+        }
+
+        .result-card:nth-child(2)::before {
+            background: linear-gradient(90deg, #ec4899, #f43f5e);
+        }
+        
+        .result-card:nth-child(3)::before {
+            background: linear-gradient(90deg, #f59e0b, #fbbf24);
+        }
+        
+        .result-card:nth-child(4)::before {
+            background: linear-gradient(90deg, #10b981, #34d399);
+        }
+
+        .model-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--text-main);
+        }
+
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .metric:last-child {
+            border-bottom: none;
+        }
+
+        .metric-label {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .metric-value {
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .metric-value.highlight {
+            color: var(--success);
+        }
+
+        .result-answer {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            min-height: 60px;
+            word-wrap: break-word;
+            border: 1px solid #f1f5f9;
+        }
+
+        /* Latency Dots Timeline Animation */
+        .latency-timeline {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin: 1rem 0;
+            min-height: 48px;
+            align-items: flex-start;
+        }
+
+        .latency-dot {
+            width: 10px;
+            height: 10px;
+            background-color: #21c45d; /* GitHub commit green */
+            border-radius: 2px;
+            animation: popIn 0.15s ease-out;
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0); opacity: 0; }
+            80% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .error-msg {
+            color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: none;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Model Performance Lab</h1>
+            <p>Compare Inference Speed & Cost across Auto-Regressive vs. System 1 Models</p>
+        </header>
+
+        <div id="errorBox" class="error-msg"></div>
+
+        <div class="card">
+            <div class="input-group">
+                <label>Context / State (e.g. support ticket, log line, context string)</label>
+                <textarea id="stateInput" rows="12">From: angry.customer@corp.com
+To: support@platform.com
+Subject: RE: Billing error and DATA LEAK???
+
+This is absolutely unacceptable! I received my invoice today and it shows a charge of $4,500 instead of my usual $450. Not only that, but the attached PDF invoice had someone else's name (John Doe) and their full credit card number (ending in 1234) on the second page!!! 
+
+If this charge is not reversed IMMEDIATELY, I am going to contact my lawyer and file a lawsuit for data negligence. Do you guys even have security protocols? I expect a call from your VP of Engineering within the hour. This is a massive GDPR violation.</textarea>
+            </div>
+            
+            <div class="input-group">
+                <label>1. Routing Decision</label>
+                <input type="text" id="instruction1" value="The user is explicitly threatening to file a lawsuit or take legal action.">
+            </div>
+            <div class="input-group">
+                <label>2. Classification Decision</label>
+                <input type="text" id="instruction2" value="The ticket mentions a potential data breach or leakage of Personally Identifiable Information (PII).">
+            </div>
+            <div class="input-group">
+                <label>3. Guardrail Decision</label>
+                <input type="text" id="instruction3" value="The customer is demanding an immediate refund or reversal of charges.">
+            </div>
+
+            <button class="btn" id="runBtn" onclick="runBenchmark()">
+                <span>Run Benchmark</span>
+            </button>
+        </div>
+
+        <div class="results-grid" id="resultsContainer">
+            <!-- Cards will be injected here -->
+        </div>
+
+        <div id="speedAnalysis" style="display:none; margin-top: 2rem; padding: 1.5rem; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; text-align: center; font-size: 1.1rem; color: var(--text-main); box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03); animation: fadeInUp 0.5s ease;">
+            <!-- Speed comparison will be injected here -->
+        </div>
+    </div>
+
+    <script>
+        const models = [
+            { id: 'gpt', name: 'GPT-4o-mini (OpenRouter)' },
+            { id: 'jev', name: 'Jev Latest (OpenRouter)' },
+            { id: 'laya', name: 'Laya (Local Engine)' }
+        ];
+
+        let latencies = {};
+
+        const timers = {};
+
+        function createLoadingCard(modelId, modelName) {
+            const card = document.createElement('div');
+            card.className = 'result-card';
+            card.id = `card-${modelId}`;
+            
+            card.innerHTML = `
+                <div class="model-name">${modelName}</div>
+                <div class="metric">
+                    <span class="metric-label">Latency Tracker (1 dot = 50ms)</span>
+                </div>
+                <div class="latency-timeline" id="timeline-${modelId}">
+                </div>
+            `;
+            return card;
+        }
+
+        function updateCard(modelId, data, timelineHtml) {
+            const card = document.getElementById(`card-${modelId}`);
+            if (!card) return;
+            
+            card.innerHTML = `
+                <div class="model-name">${data.model}</div>
+                
+                <div class="metric">
+                    <span class="metric-label">Visual Timeline</span>
+                </div>
+                <div class="latency-timeline">
+                    ${timelineHtml}
+                </div>
+
+                <div class="metric">
+                    <span class="metric-label">Latency</span>
+                    <span class="metric-value highlight">${data.latency_ms} ms</span>
+                </div>
+                
+                <div class="metric">
+                    <span class="metric-label">Cost</span>
+                    <span class="metric-value">${data.cost}</span>
+                </div>
+
+                <div class="result-answer">
+                    <span class="metric-label">Model Output:</span><br>
+                    ${data.result}
+                </div>
+            `;
+        }
+
+        async function fetchModelResult(modelId, state, instructions) {
+            try {
+                const response = await fetch('/api/benchmark', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ state, instructions, model_id: modelId })
+                });
+
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error || "Failed");
+                
+                latencies[modelId] = data.latency_ms;
+                
+                clearInterval(timers[modelId]);
+                const timeline = document.getElementById(`timeline-${modelId}`);
+                updateCard(modelId, data, timeline ? timeline.innerHTML : '');
+            } catch (err) {
+                clearInterval(timers[modelId]);
+                const timeline = document.getElementById(`timeline-${modelId}`);
+                updateCard(modelId, {
+                    model: models.find(m => m.id === modelId).name,
+                    latency_ms: "N/A",
+                    cost: "N/A",
+                    result: `<span style="color:red">Error: ${err.message}</span>`
+                }, timeline ? timeline.innerHTML : '');
+            }
+        }
+
+        function runBenchmark() {
+            const state = document.getElementById('stateInput').value;
+            const inst1 = document.getElementById('instruction1').value;
+            const inst2 = document.getElementById('instruction2').value;
+            const inst3 = document.getElementById('instruction3').value;
+            const instructions = [inst1, inst2, inst3];
+
+            const btn = document.getElementById('runBtn');
+            const resultsContainer = document.getElementById('resultsContainer');
+            const errorBox = document.getElementById('errorBox');
+            const speedAnalysis = document.getElementById('speedAnalysis');
+            
+            btn.disabled = true;
+            btn.innerHTML = 'Running...';
+            resultsContainer.style.display = 'grid';
+            resultsContainer.innerHTML = '';
+            speedAnalysis.style.display = 'none';
+            errorBox.style.display = 'none';
+            latencies = {};
+
+            // 1. Create loading cards & start timers
+            models.forEach(model => {
+                const card = createLoadingCard(model.id, model.name);
+                resultsContainer.appendChild(card);
+                
+                const timeline = document.getElementById(`timeline-${model.id}`);
+                timers[model.id] = setInterval(() => {
+                    const dot = document.createElement('div');
+                    dot.className = 'latency-dot';
+                    timeline.appendChild(dot);
+                }, 50);
+            });
+
+            // 2. Fire independent requests simultaneously
+            const promises = models.map(model => fetchModelResult(model.id, state, instructions));
+            
+            // 3. Reset button when all finish
+            Promise.all(promises).then(() => {
+                btn.disabled = false;
+                btn.innerHTML = '<span>Run Benchmark</span>';
+                
+                // Calculate Speed Multipliers
+                if (latencies['gpt'] && latencies['jev']) {
+                    let gptMs = latencies['gpt'];
+                    let jevMs = latencies['jev'];
+                    let layaMs = latencies['laya'] || 0;
+                    
+                    let jevMultiplier = (gptMs / jevMs).toFixed(2);
+                    
+                    let analysisHtml = `🏆 <strong>Speed Analysis:</strong><br><br>`;
+                    
+                    if (jevMs < gptMs) {
+                        analysisHtml += `🚀 Jev is <strong>${jevMultiplier}x faster</strong> than GPT-4o-mini!`;
+                    } else {
+                        analysisHtml += `🐢 GPT-4o-mini was slightly faster than Jev by ${ (jevMs / gptMs).toFixed(2) }x this time (Network API variation).`;
+                    }
+                    
+                    if (layaMs > 0) {
+                        analysisHtml += `<br><br><em>Note: Laya Local Engine took ${layaMs} ms because it's running on your local CPU. On a dedicated GPU, it would be the fastest!</em>`;
+                    }
+                    
+                    speedAnalysis.innerHTML = analysisHtml;
+                    speedAnalysis.style.display = 'block';
+                }
+            });
+        }
+    </script>
+</body>
+</html>
